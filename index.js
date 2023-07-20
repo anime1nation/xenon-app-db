@@ -10,12 +10,17 @@ let io = require("socket.io")(http, {
 app.get("/", function (req, res) {
   console.log("Server-running");
 });
+let messages = [];
 
 io.on("connection", function (socket) {
   console.log("user connected");
 
-  socket.emit("msg", { data: "website is running" });
+  socket.on("msgByClient", (data) => {
+    messages.push(data);
+    socket.emit("msgToClient", messages);
+  });
   socket.on("disconnect", function () {
+    messages = [];
     console.log("user left");
   });
 });
