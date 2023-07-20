@@ -13,6 +13,8 @@ app.get("/", function (req, res) {
 
 io.on("connection", function (socket) {
   console.log("user connected");
+
+  socket.emit("msg", { data: "website is running" });
   socket.on("disconnect", function () {
     console.log("user left");
   });
