@@ -10,7 +10,7 @@ let io = require("socket.io")(http, {
 app.get("/", function (req, res) {
   console.log("Server-running");
 });
-let messages = [];
+
 let users = {};
 
 io.on("connection", function (socket) {
@@ -18,20 +18,16 @@ io.on("connection", function (socket) {
 
   socket.on("join", (userId) => {
     users[userId] = socket.id;
-    console.log(users);
   });
 
   socket.on("private_message", (data) => {
-    console.log(data.messageTo);
-    console.log(users[data.messageTo]);
     const receiverSocketId = users[data.messageTo];
     const senderSocketId = users[data.messageBy];
-    messages.push(data);
     if (receiverSocketId) {
-      io.to(receiverSocketId).emit("private_message", messages);
+      io.to(receiverSocketId).emit("private_message", data);
     }
     if (senderSocketId) {
-      io.to(senderSocketId).emit("private_message", messages);
+      io.to(senderSocketId).emit("private_message", data);
     }
   });
 
@@ -40,7 +36,6 @@ io.on("connection", function (socket) {
       (key) => users[key] === socket.id
     );
     if (disconnectedUserId) {
-      messages = [];
       delete users[disconnectedUserId];
       console.log("User disconnected:", socket.id);
     }
