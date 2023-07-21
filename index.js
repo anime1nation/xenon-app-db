@@ -11,17 +11,39 @@ app.get("/", function (req, res) {
   console.log("Server-running");
 });
 let messages = [];
+let users = {};
 
 io.on("connection", function (socket) {
-  console.log("user connected");
+  console.log("user connected", socket.id);
 
-  socket.on("msgByClient", (data) => {
-    messages.push(data);
-    socket.emit("msgToClient", messages);
+  socket.on("join", (userId) => {
+    users[userId] = socket.id;
+    console.log(users);
   });
-  socket.on("disconnect", function () {
-    messages = [];
-    console.log("user left");
+
+  socket.on("private_message", (data) => {
+    console.log(data.messageTo);
+    console.log(users[data.messageTo]);
+    const receiverSocketId = users[data.messageTo];
+    const senderSocketId = users[data.messageBy];
+    messages.push(data);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit("private_message", messages);
+    }
+    if (senderSocketId) {
+      io.to(senderSocketId).emit("private_message", messages);
+    }
+  });
+
+  socket.on("disconnect", () => {
+    const disconnectedUserId = Object.keys(users).find(
+      (key) => users[key] === socket.id
+    );
+    if (disconnectedUserId) {
+      messages = [];
+      delete users[disconnectedUserId];
+      console.log("User disconnected:", socket.id);
+    }
   });
 });
 
