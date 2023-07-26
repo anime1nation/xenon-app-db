@@ -30,19 +30,44 @@ let io = require("socket.io")(http, {
 
 let users = {};
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log("A user connected", socket.id);
+
+  const db = await connectToDB();
+
+  const messageCollection = db.collection("messages");
 
   socket.on("join", (userId) => {
     users[userId] = socket.id;
   });
 
   socket.on("private_message", async (data) => {
+    const updateSender = {
+      [`messages.${data.messageBy}`]: data,
+    };
+
+    const updateReciever = {
+      [`messages.${data.messageTo}`]: data,
+    };
+
+    messageCollection.findOneAndUpdate(
+      { userName: data.messageTo },
+      { $push: updateSender }
+    );
+
+    messageCollection.findOneAndUpdate(
+      { userName: data.messageBy },
+      { $push: updateReciever }
+    );
+
     const receiverSocketId = users[data.messageTo];
+
     const senderSocketId = users[data.messageBy];
+
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("private_message", data);
     }
+
     if (senderSocketId) {
       io.to(senderSocketId).emit("private_message", data);
     }
