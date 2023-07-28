@@ -28,8 +28,8 @@ let io = require("socket.io")(http, {
   },
 });
 
-let socketIds = {};
-let rooms = {};
+// let socketIds = {};
+let users = [];
 
 io.on("connection", async (socket) => {
   console.log("A user connected", socket.id);
@@ -37,15 +37,32 @@ io.on("connection", async (socket) => {
   const db = await connectToDB();
 
   const messageCollection = db.collection("messages");
-  const reciever = io.sockets.sockets.get("reciever");
 
   socket.on("join", (roomsId) => {
-    rooms[socket.id] = roomsId;
-    socketIds[roomsId] = socket.id;
-    console.log(rooms, socketIds);
+    if (users.find((user) => user.socketId === socket.id)) {
+      const user = users.find((user) => user.socketId === socket.id);
+      if (user.roomId === roomsId) return;
+      socket.leave(user.roomId);
+      users = users.filter((user) => user.socketId !== socket.id);
+      const updateUser = { socketId: socket.id, roomId: roomsId };
+      users.push(updateUser);
+      return socket.join(roomsId);
+    } else {
+      const newUser = { socketId: socket.id, roomId: roomsId };
+      users.push(newUser);
+      return socket.join(roomsId);
+    }
   });
 
   socket.on("private_message", async (data) => {
+    const userRoomId = users.filter(
+      (user) =>
+        user.roomId === [data.messageTo, data.messageBy].sort().join("-")
+    );
+    console.log(userRoomId);
+    userRoomId.forEach((id) =>
+      io.sockets.in(id.roomId).emit("recieve_message", data)
+    );
     // const updateSender = {
     //   [`messages.${data.messageBy}`]: data,
     // };
@@ -63,36 +80,11 @@ io.on("connection", async (socket) => {
     //   { userName: data.messageBy },
     //   { $push: updateReciever }
     // );
-
-    const receiverSocketId = socketIds[data.messageTo];
-
-    const senderSocketId = socketIds[data.messageBy];
-
-    if (receiverSocketId) {
-      const reciever = users?.[receiverSocketId];
-
-      if (reciever === data.messageTo) {
-        io.to(receiverSocketId).emit("recieve_message", data);
-      }
-    }
-
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("recieve_message", data);
-    }
   });
 
   socket.on("disconnect", () => {
-    const disconnectedSocketId = Object.keys(socketIds).find(
-      (key) => socketIds[key] === socket.id
-    );
-    const disconnectedUserId = Object.values(rooms).find(
-      (key) => rooms[key] === socket.id
-    );
-    if (disconnectedSocketId) {
-      delete rooms[disconnectedUserId];
-      delete socketIds[disconnectedSocketId];
-      console.log("User disconnected:", socket.id);
-    }
+    users = users.filter((user) => user.socketId !== socket.id);
+    console.log("A user disconnected", socket.id);
   });
 });
 
