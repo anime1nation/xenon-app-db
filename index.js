@@ -55,31 +55,31 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("private_message", async (data) => {
+    const updateSender = {
+      [`messages.${data.messageBy}`]: data,
+    };
+
+    const updateReciever = {
+      [`messages.${data.messageTo}`]: data,
+    };
+
+    messageCollection.findOneAndUpdate(
+      { userName: data.messageTo },
+      { $push: updateSender }
+    );
+
+    messageCollection.findOneAndUpdate(
+      { userName: data.messageBy },
+      { $push: updateReciever }
+    );
+
     const userRoomId = users.filter(
       (user) =>
         user.roomId === [data.messageTo, data.messageBy].sort().join("-")
     );
-    console.log(userRoomId);
     userRoomId.forEach((id) =>
-      io.sockets.in(id.roomId).emit("recieve_message", data)
+      io.to(id.socketId).emit("recieve_message", data)
     );
-    // const updateSender = {
-    //   [`messages.${data.messageBy}`]: data,
-    // };
-
-    // const updateReciever = {
-    //   [`messages.${data.messageTo}`]: data,
-    // };
-
-    // messageCollection.findOneAndUpdate(
-    //   { userName: data.messageTo },
-    //   { $push: updateSender }
-    // );
-
-    // messageCollection.findOneAndUpdate(
-    //   { userName: data.messageBy },
-    //   { $push: updateReciever }
-    // );
   });
 
   socket.on("disconnect", () => {
