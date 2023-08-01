@@ -24,11 +24,10 @@ app.get("/", function (req, res) {
 
 let io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://befren.vercel.app",
   },
 });
 
-// let socketIds = {};
 let users = [];
 
 io.on("connection", async (socket) => {
