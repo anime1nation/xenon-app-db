@@ -1,7 +1,7 @@
 const express = require("express");
-const { MongoClient } = require("mongodb");
 let app = express();
 let http = require("http").Server(app);
+const { MongoClient } = require("mongodb");
 
 const client = new MongoClient(
   "mongodb+srv://aankit8295:DJagXLVVaQuksRxx@cluster0.bcgvgzy.mongodb.net/?retryWrites=true&w=majority"
@@ -54,7 +54,6 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("private_message", async (data) => {
-    console.log(data);
     const updateSender = {
       [`messages.${data.messageBy}.${data.messageId}`]: data,
     };
@@ -73,14 +72,9 @@ io.on("connection", async (socket) => {
       { $set: updateReciever }
     );
 
-    const userRoomId = users.filter(
-      (user) =>
-        user.roomId === [data.messageTo, data.messageBy].sort().join("-")
-    );
+    const usersRoomId = [data.messageTo, data.messageBy].sort().join("-");
 
-    userRoomId.forEach((id) =>
-      io.to(id.socketId).emit("recieve_message", data)
-    );
+    io.in(usersRoomId).emit("recieve_message", data);
   });
 
   socket.on("disconnect", () => {
