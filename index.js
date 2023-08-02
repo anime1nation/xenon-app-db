@@ -24,7 +24,7 @@ app.get("/", function (req, res) {
 
 let io = require("socket.io")(http, {
   cors: {
-    origin: "https://befren.vercel.app",
+    origin: "http://localhost:3000",
   },
 });
 
@@ -54,28 +54,30 @@ io.on("connection", async (socket) => {
   });
 
   socket.on("private_message", async (data) => {
+    console.log(data);
     const updateSender = {
-      [`messages.${data.messageBy}`]: data,
+      [`messages.${data.messageBy}.${data.messageId}`]: data,
     };
 
     const updateReciever = {
-      [`messages.${data.messageTo}`]: data,
+      [`messages.${data.messageTo}.${data.messageId}`]: data,
     };
 
     messageCollection.findOneAndUpdate(
       { userName: data.messageTo },
-      { $push: updateSender }
+      { $set: updateSender }
     );
 
     messageCollection.findOneAndUpdate(
       { userName: data.messageBy },
-      { $push: updateReciever }
+      { $set: updateReciever }
     );
 
     const userRoomId = users.filter(
       (user) =>
         user.roomId === [data.messageTo, data.messageBy].sort().join("-")
     );
+
     userRoomId.forEach((id) =>
       io.to(id.socketId).emit("recieve_message", data)
     );
