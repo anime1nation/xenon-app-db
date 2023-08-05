@@ -4,7 +4,7 @@ let http = require("http").Server(app);
 const { MongoClient } = require("mongodb");
 
 const client = new MongoClient(
-  "mongodb+srv://aankit8295:DJagXLVVaQuksRxx@cluster0.bcgvgzy.mongodb.net/?retryWrites=true&w=majority"
+  "mongodb+srv://aankit8295:TPxqK9rP5VBrB0Um@resume.xaexoic.mongodb.net/?retryWrites=true&w=majority"
 );
 
 async function connectToDB() {
