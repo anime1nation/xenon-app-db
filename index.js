@@ -1,14 +1,28 @@
 const express = require("express");
 let app = express();
 let http = require("http").Server(app);
+const cors = require("cors");
 const { MongoClient } = require("mongodb");
 
 const client = new MongoClient(
   "mongodb+srv://aankit8295:TPxqK9rP5VBrB0Um@resume.xaexoic.mongodb.net/?retryWrites=true&w=majority"
 );
 
+const corsOpts = {
+  origin: "*",
+
+  methods: ["GET", "POST"],
+
+  allowedHeaders: ["Content-Type"],
+};
+
+app.use(cors(corsOpts));
+
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Credentials", true);
   next();
 });
 
