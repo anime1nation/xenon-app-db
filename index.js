@@ -43,8 +43,7 @@ app.get("/", function (req, res) {
 
 let io = require("socket.io")(http, {
   cors: {
-    origin:
-      process.env.NODE_ENV === "production" ? false : ["http://localhost:3000"],
+    origin: "*",
   },
 });
 
