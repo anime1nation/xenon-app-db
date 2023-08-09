@@ -7,6 +7,11 @@ const client = new MongoClient(
   "mongodb+srv://aankit8295:TPxqK9rP5VBrB0Um@resume.xaexoic.mongodb.net/?retryWrites=true&w=majority"
 );
 
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  next();
+});
+
 async function connectToDB() {
   try {
     const dbClient = await client.connect();
