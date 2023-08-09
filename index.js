@@ -24,7 +24,7 @@ app.get("/", function (req, res) {
 
 let io = require("socket.io")(http, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "https://xenon-chat.vercel.app",
   },
 });
 
