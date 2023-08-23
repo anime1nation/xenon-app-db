@@ -1,12 +1,23 @@
 const express = require("express");
 let app = express();
 let http = require("http").Server(app);
+const https = require("https");
 const cors = require("cors");
 const { MongoClient } = require("mongodb");
+const fs = require('fs');
 
 const client = new MongoClient(
   "mongodb+srv://aankit8295:TPxqK9rP5VBrB0Um@resume.xaexoic.mongodb.net/?retryWrites=true&w=majority"
 );
+
+const secureServer = https.createServer({
+
+  key: fs.readFileSync('./server.key'),
+  
+  cert: fs.readFileSync('./server.cert')
+  
+  }, app);
+
 
 const corsOpts = {
   origin: "*",
@@ -41,11 +52,7 @@ app.get("/", function (req, res) {
   console.log("Server-running");
 });
 
-let io = require("socket.io")(http, {
-  cors: {
-    origin: "*",
-  },
-});
+let io = require("socket.io")(secureServer);
 
 let users = [];
 
@@ -102,6 +109,8 @@ io.on("connection", async (socket) => {
   });
 });
 
-http.listen(3001, function () {
+
+
+secureServer.listen(3001, function () {
   console.log("server running");
 });
